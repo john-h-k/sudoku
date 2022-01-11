@@ -2,23 +2,18 @@ from collections import defaultdict
 from time import time
 import sudoku
 
-v = sudoku.example
-
 class Solver:
     def __init__(self, Sudoku):
         self.Sudoku = Sudoku
-
-    def isLegal(self, x, y, n):
-        return not any([n in self.Sudoku.column[x], n in self.Sudoku.row[y], n in self.Sudoku.containing_grid[x, y]])
-            
+    
     def crimeDesc(self, x, y, n):
         return list(filter(lambda x: x != None, map(lambda arr: arr[1] if n in arr[0]() else None, [
-            [lambda: self.Sudoku.column[x], "Already in column"],
-            [lambda: self.Sudoku.row[y], "Already in row"],
-            [lambda: self.Sudoku.containing_grid[x, y], "Already in grid"],
+            [lambda: self.Sudoku.column(x), "Already in column"],
+            [lambda: self.Sudoku.row(y), "Already in row"],
+            [lambda: self.Sudoku.containing_grid(x, y), "Already in grid"],
         ])))[0]
 
-    def SolveBackTrack(self):
+    def solveBackTrack(self):
         iterations = 0
         lastIterTime = time()
 
@@ -64,7 +59,7 @@ class Solver:
 
                     for i in range(current, current + 9):
                         value = i % 9 + 1
-                        if self.isLegal(x, y, value):
+                        if sudoku.is_legal(x, y, value):
                             sudoku[x, y] = value
 
                             x, y = stepForward(x, y, value)
@@ -101,8 +96,8 @@ erect_puzzle = sudoku.Sudoku.from_text("""
 0 0 0 0 4 0 0 0 9
 """)
 
-#erect_puzzle = sudoku.example
+erect_puzzle = sudoku.example
 
 print(erect_puzzle.highlighted())
-Solver(erect_puzzle).SolveBackTrack()
+Solver(erect_puzzle).solveBackTrack()
 print(erect_puzzle.highlighted())

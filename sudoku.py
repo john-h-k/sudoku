@@ -20,24 +20,8 @@ class Sudoku:
 
     def __init__(self, givens={}):
         self.__grids = [Sudoku.Grid(self, index % 3, index // 3) for index in range(9)]
-        self.grid = Sudoku.__ForwardIndexer(
-            lambda key: self.__grids[key[1] * 3 + key[0]]
-        )
-
-
-        self.containing_grid = Sudoku.__ForwardIndexer(
-            lambda key: self.grid[key[0] // 3, key[1] // 3]
-        )
-
         self.__columns = [Sudoku.Column(self, i) for i in range(9)]
-        self.column = Sudoku.__ForwardIndexer(
-            lambda key: self.__columns[key]
-        )
-
         self.__rows = [Sudoku.Row(self, i) for i in range(9)]
-        self.row = Sudoku.__ForwardIndexer(
-            lambda key: self.__rows[key]
-        )
 
         self.__givens = {}
 
@@ -46,12 +30,27 @@ class Sudoku:
             self.__givens[k] = v
         
         assert(self.__givens == givens)
+
+    def is_legal(self, x, y, n):
+        return not any((n in self.row(y), n in self.column(x), n in self.containing_grid(x, y)))
+
+    def grid(self, x, y):
+        return self.__grids[y * 3 + x]
+
+    def containing_grid(self, x, y):
+        return self.grid(x // 3, y // 3)
+
+    def row(self, i):
+        return self.__rows[i]
+
+    def column(self, i):
+        return self.__columns[i]
         
     def is_solved(self):
         valid = lambda item: all((n + 1 in item for n in range(9))) 
 
-        rows = all((valid(self.row[x]) for x in range(9)))
-        columns = all((valid(self.column[x]) for x in range(9)))
+        rows = all((valid(self.row(x)) for x in range(9)))
+        columns = all((valid(self.column(x)) for x in range(9)))
         grids = all((valid(self.__grids[x]) for x in range(9)))
 
         return rows and columns and grids
@@ -74,12 +73,27 @@ class Sudoku:
         return (key[0] % 3, key[1] % 3)
 
     def __getitem__(self, key):
-        return self.grid[self.__grid_index(key)][self.__piece_index(key)]
+        return self.grid(*self.__grid_index(key))[self.__piece_index(key)]
 
     def __setitem__(self, key, value):
-        self.grid[self.__grid_index(key)][self.__piece_index(key)] = value
+        self.grid(*self.__grid_index(key))[self.__piece_index(key)] = value
 
-    class Column:
+    class __SudokuSet:
+        # Row, Column, Grid
+        def is_solved(self):
+            return all((n in self for n in range(1, 10)))
+
+        def is_legal(self):
+            return all((self.__value_list().count(n) <= 1 for n in range(1, 10)))
+
+        def __contains__(self, value):
+            return value in self.__value_list()
+
+        def __value_list(self):
+            return [self[i] for i in range(9)]
+
+    
+    class Column(__SudokuSet):
         def __init__(self, parent, index):
             self.__parent = parent
             self.__index = index
@@ -90,10 +104,7 @@ class Sudoku:
         def __setitem__(self, key, value):
             self.__parent[self.__index, key] = value
 
-        def __contains__(self, value):
-            return value in [self[i] for i in range(9)]
-
-    class Row:
+    class Row(__SudokuSet):
         def __init__(self, parent, index):
             self.__parent = parent
             self.__index = index
@@ -104,12 +115,10 @@ class Sudoku:
         def __setitem__(self, key, value):
             self.__parent[key, self.__index] = value
 
-        def __contains__(self, value):
-            return value in [self[i] for i in range(9)]
-
-    class Grid:
+    class Grid(__SudokuSet):
         def __init__(self, parent, x, y):
             self.__values = [None] * 3 * 3
+            self.__empty_count = 9
             self.__parent = parent
             self.__x = x
             self.__y = y
@@ -125,6 +134,8 @@ class Sudoku:
                 raise IndexError(f"Position was given!")
             
             self.__values[key[1] * 3 + key[0]] = value
+
+            self.__empty_count += (1 if value is None else -1)
 
         def __contains__(self, value):
             return value in self.__values
