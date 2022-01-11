@@ -144,11 +144,31 @@ class Solver:
         order_list = []
         for y in range(9):
             for x in range(9):
+                if self.Sudoku.is_given(x, y):
+                    continue
                 order_list.append((x, y))
         return order_list
+    
+    def getOptimizedList(self):
+        optimized_list = []
+        for y in range(9):
+            for x in range(9):
+                count = 0
+                if self.Sudoku.is_given(x, y):
+                    continue
+                for i in range(1, 10):
+                    if self.Sudoku.is_legal(x, y, i):
+                        count += 1
+                optimized_list.append([count, (x, y)])
+        optimized_list.sort(key=lambda x: x[0])
+        output_list = []
+        for i in optimized_list:
+            output_list.append(i[1])
+        return output_list
 
     def orderedBacktrack(self, order_list):
         current_index = 0
+        counter = 0
 
         while True:
             x, y = order_list[current_index]
@@ -164,9 +184,10 @@ class Solver:
                 failed = True
                 
                 for i in range(start_it, 10):
-                    if self.isLegal(x, y, i):
+                    if self.Sudoku.is_legal(x, y, i):
                         failed = False
                         self.Sudoku[x, y] = i
+
                         break
                 
                 if failed:
@@ -177,11 +198,16 @@ class Solver:
                         current_index -= 1
                         x, y = order_list[current_index]
                 else:
+                    counter += 1
                     current_index += 1
-                    x, y = order_list[current_index]
+                    if current_index < len(order_list):
+                        x, y = order_list[current_index]
                     
-            if (x >= 8 and y >= 8):
+            if current_index == len(order_list):
+                print(counter)
                 break
+
+
 
 erect_puzzle = sudoku.Sudoku.from_text("""
 0 0 0 0 0 0 0 0 0
@@ -198,6 +224,6 @@ erect_puzzle = sudoku.Sudoku.from_text("""
 erect_puzzle = sudoku.example
 
 print(erect_puzzle.highlighted())
-print(Solver(erect_puzzle).getBasicList())
+print(Solver(erect_puzzle).getOptimizedList())
 Solver(erect_puzzle).orderedBacktrack(Solver(erect_puzzle).getBasicList())
 print(erect_puzzle.highlighted())
