@@ -10,11 +10,20 @@ class Sudoku:
 
         return Sudoku(givens)
 
+    def to_text(self):
+        result = []
+
+        for y in range(9):
+            result.append(" ".join([str(self[x, y]) for x in range(9)]))
+
+        return "\n".join(result)
+
     def __init__(self, givens={}):
         self.__grids = [Sudoku.Grid(self, index % 3, index // 3) for index in range(9)]
         self.grid = Sudoku.__ForwardIndexer(
             lambda key: self.__grids[key[1] * 3 + key[0]]
         )
+
 
         self.containing_grid = Sudoku.__ForwardIndexer(
             lambda key: self.grid[key[0] // 3, key[1] // 3]
@@ -112,8 +121,8 @@ class Sudoku:
             x = (self.__x * 3) + key[0]
             y = (self.__y * 3) + key[1]
 
-            if False and self.__parent.is_given(x, y):
-                raise IndexError(f"Position ({x}, {y}) was given!")
+            if self.__parent.is_given(x, y):
+                raise IndexError(f"Position was given!")
             
             self.__values[key[1] * 3 + key[0]] = value
 
@@ -186,3 +195,5 @@ correct = Sudoku.from_text("""
 9 8 2 7 3 4 5 6 1
 4 5 1 6 9 2 3 7 8
 """)
+
+print(correct.to_text())
