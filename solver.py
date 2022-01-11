@@ -87,8 +87,107 @@ class Solver:
                         x, y = stepBack(x, y)
                         while sudoku.is_given(x, y) or len(visited[x, y]) == 9:
                             x, y = stepBack(x, y)
-                            
-     
+    
+    def TomBackTrack(self):
+    
+        def stepBack(x, y):
+
+            if x > 0:
+                return (x - 1, y)
+            else:
+                if y == 0:
+                    return (x, y)
+                return (8, y - 1)
+
+        def stepForward(x, y):
+
+            if x < 8:
+                return (x + 1, y)
+            else:
+                if y >= 8:
+                    return (x, y)
+                return (0, y + 1)
+
+        x = 0
+        y = 0
+        counter = 0
+
+        while True:
+            
+            #print(self.Sudoku.highlighted())
+            if self.Sudoku.is_given(x, y):
+                x, y = stepForward(x, y)
+            else:
+                if self.Sudoku[x, y] is None:
+                    start_it = 1
+                else:
+                    start_it = self.Sudoku[x, y] + 1
+                
+                failed = True
+                
+                for i in range(start_it, 10):
+                    if self.isLegal(x, y, i):
+                        failed = False
+                        self.Sudoku[x, y] = i
+                        break
+                
+                if failed:
+                    self.Sudoku[x, y] = None
+                    x, y = stepBack(x, y)
+                    while self.Sudoku.is_given(x, y):
+                        x, y = stepBack(x, y)
+                else:
+                    x, y = stepForward(x, y)
+                    counter += 1
+                    
+
+            if (x >= 8 and y >= 8):
+                print(counter)
+                break
+
+    def getBasicList(self):
+        order_list = []
+        for y in range(9):
+            for x in range(9):
+                order_list.append((x, y))
+        return order_list
+
+    def orderedBacktrack(self, order_list):
+        current_index = 0
+
+        while True:
+            x, y = order_list[current_index]
+            if self.Sudoku.is_given(x, y):
+                current_index += 1
+                x, y = order_list[current_index]
+            else:
+                if self.Sudoku[x, y] is None:
+                    start_it = 1
+                else:
+                    start_it = self.Sudoku[x, y] + 1
+                
+                failed = True
+                
+                for i in range(start_it, 10):
+                    if self.isLegal(x, y, i):
+                        failed = False
+                        self.Sudoku[x, y] = i
+                        break
+                
+                if failed:
+                    self.Sudoku[x, y] = None
+                    current_index -= 1
+                    x, y = order_list[current_index]
+                    while self.Sudoku.is_given(x, y):
+                        current_index -= 1
+                        x, y = order_list[current_index]
+                else:
+                    current_index += 1
+                    x, y = order_list[current_index]
+                    
+            if (x >= 8 and y >= 8):
+                break
+
 erect_puzzle = sudoku.Sudoku.from_text("""
 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 3 0 8 5
@@ -101,8 +200,9 @@ erect_puzzle = sudoku.Sudoku.from_text("""
 0 0 0 0 4 0 0 0 9
 """)
 
-#erect_puzzle = sudoku.example
+erect_puzzle = sudoku.example
 
 print(erect_puzzle.highlighted())
-Solver(erect_puzzle).SolveBackTrack()
+print(Solver(erect_puzzle).getBasicList())
+Solver(erect_puzzle).orderedBacktrack(Solver(erect_puzzle).getBasicList())
 print(erect_puzzle.highlighted())
