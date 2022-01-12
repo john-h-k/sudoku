@@ -1,214 +1,49 @@
 from collections import defaultdict
 from time import time
 import sudoku
+from enum import Enum
+
+class SolveStrategy(Enum):
+    BACKTRACK = "solveBackTrack"
+    BACKTRACK_SORTED = "solveBackTrackSorted"
 
 class Solver:
-    def __init__(self, Sudoku):
-        self.Sudoku = Sudoku
+    def __init__(self, sudoku):
+        self.sudoku = sudoku
     
     def crimeDesc(self, x, y, n):
         return list(filter(lambda x: x != None, map(lambda arr: arr[1] if n in arr[0]() else None, [
-            [lambda: self.Sudoku.column(x), "Already in column"],
-            [lambda: self.Sudoku.row(y), "Already in row"],
-            [lambda: self.Sudoku.containing_grid(x, y), "Already in grid"],
+            [lambda: self.sudoku.column(x), "Already in column"],
+            [lambda: self.sudoku.row(y), "Already in row"],
+            [lambda: self.sudoku.containing_grid(x, y), "Already in grid"],
         ])))[0]
 
-    def solveBackTrack(self):
+    def solve(self, solver):
         iterations = 0
+        start = time()
         lastIterTime = time()
 
-        def stepBack(x, y):
-            if not self.Sudoku.is_given(x, y):
-                visited[x, y] = set()
-                self.Sudoku[x, y] = None
+        def iterate():
+            nonlocal lastIterTime, iterations
 
-            if x > 0:
-                return (x - 1, y)
-            else:
-                assert(y > 0)
-                return (8, y - 1)
+            iterations += 1
 
-        def stepForward(x, y, value):
-            if value is not None:
-                visited[x, y].add(value)
+            if iterations % 1_000 == 0:
+                now = time()
+                elapsed = now - lastIterTime
+                lastIterTime = now
 
-            if x < 8:
-                return (x + 1, y)
-            else:
-                assert(y < 8)
-                return (0, y + 1)
+                print(f"{1_000 / elapsed} iterations/sec")
 
-        x = 0
-        y = 0
+        solver.solve(self.sudoku, iterate)
 
-        visited = defaultdict(set)
+        end = time()
+        print(f"Took {end - start}s")
 
-        sudoku = self.Sudoku
+        assert(self.sudoku.is_solved())
 
-        while True:
-            x = 0
-            while True:
-                if x == 8 and y == 8 and sudoku.is_solved():
-                    return
-
-                if sudoku.is_given(x, y):
-                    x, y = stepForward(x, y, None)
-                else:
-                    # get current digit if exists
-                    current = sudoku[x, y] or 0
-
-                    for i in range(current, current + 9):
-                        value = i % 9 + 1
-                        if sudoku.is_legal(x, y, value):
-                            sudoku[x, y] = value
-
-                            x, y = stepForward(x, y, value)
-                            iterations += 1
-
-                            if iterations % 1_000 == 0:
-                                now = time()
-                                elapsed = now - lastIterTime
-                                lastIterTime = now
-
-                                print(f"{1_000 / elapsed} iterations/sec")
-
-                            break
-                        else:
-                            visited[x, y].add(value)
-
-                    else: # no legal moves
-                        sudoku[x, y] = None
-                        
-                        x, y = stepBack(x, y)
-                        while sudoku.is_given(x, y) or len(visited[x, y]) == 9:
-                            x, y = stepBack(x, y)
-    
-    def TomBackTrack(self):
-    
-        def stepBack(x, y):
-
-            if x > 0:
-                return (x - 1, y)
-            else:
-                if y == 0:
-                    return (x, y)
-                return (8, y - 1)
-
-        def stepForward(x, y):
-
-            if x < 8:
-                return (x + 1, y)
-            else:
-                if y >= 8:
-                    return (x, y)
-                return (0, y + 1)
-
-        x = 0
-        y = 0
-        counter = 0
-
-        while True:
-            
-            #print(self.Sudoku.highlighted())
-            if self.Sudoku.is_given(x, y):
-                x, y = stepForward(x, y)
-            else:
-                if self.Sudoku[x, y] is None:
-                    start_it = 1
-                else:
-                    start_it = self.Sudoku[x, y] + 1
-                
-                failed = True
-                
-                for i in range(start_it, 10):
-                    if self.isLegal(x, y, i):
-                        failed = False
-                        self.Sudoku[x, y] = i
-                        break
-                
-                if failed:
-                    self.Sudoku[x, y] = None
-                    x, y = stepBack(x, y)
-                    while self.Sudoku.is_given(x, y):
-                        x, y = stepBack(x, y)
-                else:
-                    x, y = stepForward(x, y)
-                    counter += 1
-                    
-
-            if (x >= 8 and y >= 8):
-                print(counter)
-                break
-
-    def getBasicList(self):
-        order_list = []
-        for y in range(9):
-            for x in range(9):
-                if self.Sudoku.is_given(x, y):
-                    continue
-                order_list.append((x, y))
-        return order_list
-    
-    def getOptimizedList(self):
-        optimized_list = []
-        for y in range(9):
-            for x in range(9):
-                count = 0
-                if self.Sudoku.is_given(x, y):
-                    continue
-                for i in range(1, 10):
-                    if self.Sudoku.is_legal(x, y, i):
-                        count += 1
-                optimized_list.append([count, (x, y)])
-        optimized_list.sort(key=lambda x: x[0])
-        output_list = []
-        for i in optimized_list:
-            output_list.append(i[1])
-        return output_list
-
-    def orderedBacktrack(self, order_list):
-        current_index = 0
-        counter = 0
-
-        while True:
-            x, y = order_list[current_index]
-            if self.Sudoku.is_given(x, y):
-                current_index += 1
-                x, y = order_list[current_index]
-            else:
-                if self.Sudoku[x, y] is None:
-                    start_it = 1
-                else:
-                    start_it = self.Sudoku[x, y] + 1
-                
-                failed = True
-                
-                for i in range(start_it, 10):
-                    if self.Sudoku.is_legal(x, y, i):
-                        failed = False
-                        self.Sudoku[x, y] = i
-
-                        break
-                
-                if failed:
-                    self.Sudoku[x, y] = None
-                    current_index -= 1
-                    x, y = order_list[current_index]
-                    while self.Sudoku.is_given(x, y):
-                        current_index -= 1
-                        x, y = order_list[current_index]
-                else:
-                    counter += 1
-                    current_index += 1
-                    if current_index < len(order_list):
-                        x, y = order_list[current_index]
-                    
-            if current_index == len(order_list):
-                print(counter)
-                break
-
-
-
+                            
+     
 erect_puzzle = sudoku.Sudoku.from_text("""
 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 3 0 8 5
@@ -222,8 +57,3 @@ erect_puzzle = sudoku.Sudoku.from_text("""
 """)
 
 erect_puzzle = sudoku.example
-
-print(erect_puzzle.highlighted())
-print(Solver(erect_puzzle).getOptimizedList())
-Solver(erect_puzzle).orderedBacktrack(Solver(erect_puzzle).getBasicList())
-print(erect_puzzle.highlighted())

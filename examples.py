@@ -1,3 +1,10 @@
+from sudoku import Sudoku
+from solver import Solver
+from solve_algorithms.backtrack import Backtrack
+from solve_algorithms.ordered_backtrack import OrderedBacktrack
+from solve_algorithms.ordered_backtrack_native import OrderedBacktrackNative
+
+
 example = Sudoku.from_text("""
 0 2 0 3 5 0 0 8 4
 0 0 0 4 6 0 0 5 7
@@ -10,7 +17,7 @@ example = Sudoku.from_text("""
 0 5 0 0 9 2 0 0 8
 """)
 
-erect_puzzle = sudoku.Sudoku.from_text("""
+erect_puzzle = Sudoku.from_text("""
 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 3 0 8 5
 0 0 1 0 2 0 0 0 0
@@ -21,3 +28,6 @@ erect_puzzle = sudoku.Sudoku.from_text("""
 0 0 2 0 1 0 0 0 0
 0 0 0 0 4 0 0 0 9
 """)
+
+solver = Solver(erect_puzzle)
+solver.solve(OrderedBacktrackNative())

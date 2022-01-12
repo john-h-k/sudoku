@@ -1,1 +1,6 @@
 /__pycache__/*
+
+*.so
+*.dsYM
+
+.vscode
