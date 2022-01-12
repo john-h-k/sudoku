@@ -3,7 +3,7 @@ PY_LDFLAGS := $(shell python3-config --ldflags)
 PY_INCLUDE := $(shell python3-config --includes)
 
 # the compiler to use
-CC = clang
+CC = gcc
 
 # compiler flags:
 #  -g    adds debugging information to the executable file
@@ -17,6 +17,6 @@ LFLAGS =
 TARGET = solver
   
 all: $(TARGET)
-  
+ 
 $(TARGET): $(TARGET).c
-	$(CC) $(CFLAGS) -Ofast -o $(TARGET) $(TARGET).c $(LFLAGS)
+	$(CC) $(CFLAGS) -Ofast -mcpu=apple-m1 -o $(TARGET) $(TARGET).c $(LFLAGS)

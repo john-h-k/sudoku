@@ -2,13 +2,38 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <time.h>
+#include <stdbool.h>
+
+struct timespec start, stop;
+
+
+double to_seconds(struct timespec time) {
+    double seconds = time.tv_sec;
+    double nanoseconds = time.tv_nsec;
+
+    return seconds + (nanoseconds / 1e9);
+}
+
+double elapsed_seconds() {
+    struct timespec result;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &result);
+
+    return to_seconds(result);
+}
+
+#define EMPTY_POSITION UINT8_MAX
+
+typedef struct {
+    uint8_t x;
+    uint8_t y;
+    uint8_t count;
+} position_info;
 
 typedef struct {
     uint8_t value;
     uint8_t is_given;
 } position;
-
-#define EMPTY_POSITION UINT8_MAX
 
 typedef struct {
     position values[9 * 9];
@@ -108,18 +133,34 @@ void print_sudoku(sudoku* sudoku, console_format* new_value_format) {
     }
 }
 
-typedef struct {
-    uint8_t x;
-    uint8_t y;
-    uint8_t count;
-} position_info;
-
 int compare_position_info(const void* l, const void* r) {
-    int left = ((position_info*)l)->count;
-    int right = ((position_info*)r)->count;
+    position_info* left = (position_info*)l;
+    position_info* right = (position_info*)r;
 
-    if (left > right) return 1;
-    if (left < right) return -1;
+    if (left->count > right->count) {
+        return 1;
+    }
+
+    if (left->count < right->count) {
+        return -1;
+    }
+
+    if (left->y < right->y) {
+        return 1;
+    }
+
+    if (left->y > right->y) {
+        return -1;
+    }
+
+    if (left->x < right->x) {
+        return 1;
+    }
+
+    if (left->x > right->x) {
+        return -1;
+    }
+
     return 0;
 }
 
@@ -161,7 +202,7 @@ void solver_ordered_backtrack(sudoku* sudoku) {
     uint32_t current_index = 0;
     uint32_t counter = 0;
 
-    while (1) {
+    while (true) {
         uint8_t x = order_list[current_index].x;
         uint8_t y = order_list[current_index].y;
 
@@ -263,7 +304,7 @@ int main() {
     print_sudoku(sudoku, NULL);
 
     solver_ordered_backtrack(sudoku);
-
+    
     print_sudoku(sudoku, NULL);
 }
 

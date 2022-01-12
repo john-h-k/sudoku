@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class Sudoku:
     @staticmethod
     def from_text(text):
@@ -19,7 +20,8 @@ class Sudoku:
         return "\n".join(result)
 
     def __init__(self, givens={}):
-        self.__grids = [Sudoku.Grid(self, index % 3, index // 3) for index in range(9)]
+        self.__grids = [Sudoku.Grid(self, index % 3, index // 3)
+                        for index in range(9)]
         self.__columns = [Sudoku.Column(self, i) for i in range(9)]
         self.__rows = [Sudoku.Row(self, i) for i in range(9)]
 
@@ -28,7 +30,7 @@ class Sudoku:
         for k, v in givens.items():
             self[k] = v
             self.__givens[k] = v
-        
+
         assert(self.__givens == givens)
 
     def is_legal(self, x, y, n):
@@ -45,9 +47,9 @@ class Sudoku:
 
     def column(self, i):
         return self.__columns[i]
-        
+
     def is_solved(self):
-        valid = lambda item: all((n + 1 in item for n in range(9))) 
+        def valid(item): return all((n + 1 in item for n in range(9)))
 
         rows = all((valid(self.row(x)) for x in range(9)))
         columns = all((valid(self.column(x)) for x in range(9)))
@@ -60,7 +62,7 @@ class Sudoku:
             for y in range(9):
                 if self[x, y] != other[x, y]:
                     return False
-        
+
         return True
 
     def is_given(self, x, y):
@@ -92,7 +94,6 @@ class Sudoku:
         def __value_list(self):
             return [self[i] for i in range(9)]
 
-    
     class Column(__SudokuSet):
         def __init__(self, parent, index):
             self.__parent = parent
@@ -131,8 +132,8 @@ class Sudoku:
             y = (self.__y * 3) + key[1]
 
             if self.__parent.is_given(x, y):
-                raise IndexError(f"Position was given!")
-            
+                pass
+
             self.__values[key[1] * 3 + key[0]] = value
 
             self.__empty_count += (1 if value is None else -1)
@@ -158,11 +159,11 @@ class Sudoku:
 
                 return value if not highlight else prefix + value + postfix
 
-            value = str(value) if self.is_given(x, y) else (color(str(value)) if value is not None else ' ')
-            
+            value = str(value) if self.is_given(x, y) else (
+                color(str(value)) if value is not None else ' ')
+
             grid_x = x % 3 == 0
             grid_y = y % 3 != 0
-
             result = "-----" if grid_y else '═════'
             result += "\n"
             result += "‖" if grid_x else "|"
@@ -178,10 +179,12 @@ class Sudoku:
                 line += cell(self[x, y], x, y)
 
             split = line.split("\n")
-            
-            result += "\n" + ("".join(split[::2]) + "\n" + "".join(split[1::2]))
+
+            result += "\n" + \
+                ("".join(split[::2]) + "\n" + "".join(split[1::2]))
 
         return result
+
 
 example = Sudoku.from_text("""
 0 2 0 3 5 0 0 8 4
