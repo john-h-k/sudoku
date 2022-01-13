@@ -28,12 +28,12 @@ class Solver:
 
             iterations += 1
 
-            if iterations % 1_000 == 0:
-                now = time()
-                elapsed = now - lastIterTime
-                lastIterTime = now
+            # if iterations % 1_000 == 0:
+            #     now = time()
+            #     elapsed = now - lastIterTime
+            #     lastIterTime = now
 
-                print(f"{1_000 / elapsed} iterations/sec")
+            #     print(f"{1_000 / elapsed} iterations/sec")
 
         solver.solve(self.sudoku, iterate)
 

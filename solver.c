@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdbool.h>
+#include <string.h>
+#include <assert.h>
 
 struct timespec start, stop;
-
 
 double to_seconds(struct timespec time) {
     double seconds = time.tv_sec;
@@ -35,40 +36,66 @@ typedef struct {
     uint8_t is_given;
 } position;
 
+typedef uint16_t legal_values_mask;
+
+typedef struct {
+    legal_values_mask columns[9];
+    legal_values_mask rows[9];
+    legal_values_mask grids[9];
+} legal_values_info;
+
 typedef struct {
     position values[9 * 9];
 } sudoku;
 
-position* piece_at(sudoku* sudoku, uint32_t x, uint32_t y) {
+void initialize_legal_value_info(legal_values_info* legals) {
+    memset(legals, 0, sizeof(*legals));
+}
+
+void make_illegal(legal_values_info* legals, uint32_t x, uint32_t y, uint8_t value) {
+    legal_values_mask value_mask = (1 << value);
+
+    legals->columns[x] |= value_mask;
+    legals->rows[y] |= value_mask;
+    legals->grids[(y / 3) * 3 + (x / 3)] |= value_mask;
+}
+
+void make_legal(legal_values_info* legals, uint32_t x, uint32_t y, uint8_t value) {
+    legal_values_mask value_mask = (1 << value);
+
+    legals->columns[x] &= ~value_mask;
+    legals->rows[y] &= ~value_mask;
+    legals->grids[(y / 3) * 3 + (x / 3)] &= ~value_mask;
+}
+
+position* position_at(sudoku* sudoku, uint32_t x, uint32_t y) {
     return &sudoku->values[(y * 9) + x];
 }
 
+void set_position(sudoku* sudoku, legal_values_info* legals, uint32_t x, uint32_t y, uint8_t value) {
+    position_at(sudoku, x, y)->value = value;
+
+    make_illegal(legals, x, y, value);
+}
+
 uint32_t is_empty(sudoku* sudoku, uint32_t x, uint32_t y) {
-    return piece_at(sudoku, x, y)->value == EMPTY_POSITION;
+    return position_at(sudoku, x, y)->value == EMPTY_POSITION;
 }
 
 void set_given(sudoku* sudoku, uint32_t x, uint32_t y, uint32_t value) {
-    position* pos = piece_at(sudoku, x, y);
+    position* pos = position_at(sudoku, x, y);
 
     pos->value = value;
     pos->is_given = 1;
 }
 
-uint32_t is_legal(sudoku* sudoku, uint32_t x, uint32_t y, uint32_t value) {
-    for (uint32_t i = 0; i < 9; i++) {
-        uint32_t grid_x = ((x / 3) * 3) + i % 3;
-        uint32_t grid_y = ((y / 3) * 3) + i / 3;
+bool is_legal(legal_values_info* legals, uint32_t x, uint32_t y, uint32_t value) {
+    legal_values_mask row = legals->rows[y];
+    legal_values_mask column = legals->columns[x];
+    legal_values_mask grid = legals->grids[(y / 3) * 3 + (x / 3)];
 
-        uint32_t col_valid = piece_at(sudoku, i, y)->value != value;
-        uint32_t row_valid = piece_at(sudoku, x, i)->value != value;
-        uint32_t grid_valid = piece_at(sudoku, grid_x, grid_y)->value != value;
-
-        if (!(row_valid && col_valid && grid_valid)) {
-            return 0;
-        }
-    }
-
-    return 1;
+    legal_values_mask mask = (1 << value);
+    return (row & mask) == 0 && (column & mask) == 0 && (grid & mask) == 0;
 }
 
 typedef enum {
@@ -113,7 +140,7 @@ void print_sudoku(sudoku* sudoku, console_format* new_value_format) {
 
     for (uint32_t y = 0; y < 9; y++) {
         for (uint32_t x = 0; x < 9; x++) {
-            position* pos = piece_at(sudoku, x, y);
+            position* pos = position_at(sudoku, x, y);
 
             if (!pos->is_given) {
                 start_formatting(format);
@@ -145,38 +172,38 @@ int compare_position_info(const void* l, const void* r) {
         return -1;
     }
 
-    if (left->y < right->y) {
+    if (left->y > right->y) {
         return 1;
     }
 
-    if (left->y > right->y) {
+    if (left->y < right->y) {
         return -1;
     }
 
-    if (left->x < right->x) {
+    if (left->x > right->x) {
         return 1;
     }
 
-    if (left->x > right->x) {
+    if (left->x < right->x) {
         return -1;
     }
 
     return 0;
 }
 
-void make_optimized_list(sudoku* sudoku, position_info* list, uint8_t* list_size) {
+void make_list(sudoku* sudoku, legal_values_info* legals, position_info* list, uint8_t* list_size) {
     uint32_t list_head = 0;
 
     for (uint32_t y = 0; y < 9; y++) {
         for (uint32_t x = 0; x < 9; x++) {
             uint32_t count = 0;
 
-            if (piece_at(sudoku, x, y)->is_given) {
+            if (position_at(sudoku, x, y)->is_given) {
                 continue;
             }
 
             for (uint32_t i = 1; i < 10; i++) {
-                if (is_legal(sudoku, x, y, i)) {
+                if (is_legal(legals, x, y, i)) {
                     count += 1;
                 }
             }
@@ -189,15 +216,39 @@ void make_optimized_list(sudoku* sudoku, position_info* list, uint8_t* list_size
         }
     }
 
-    qsort(list, list_head, sizeof(*list), compare_position_info);
     *list_size = (uint8_t)list_head;
 }
 
-void solver_ordered_backtrack(sudoku* sudoku) {
+void make_optimized_list(sudoku* sudoku, legal_values_info* legals, position_info* list, uint8_t* list_size) {
+    make_list(sudoku, legals, list, list_size);    
+
+    qsort(list, *list_size, sizeof(*list), compare_position_info);
+}
+
+void solver_ordered_backtrack(sudoku* sudoku, uint32_t* iterations) {
     position_info order_list[9 * 9];
     uint8_t order_list_size = 0;
 
-    make_optimized_list(sudoku, order_list, &order_list_size);
+    legal_values_info legals;
+    initialize_legal_value_info(&legals);
+
+    for (uint32_t y = 0; y < 9; y++) {
+        for (uint32_t x = 0; x < 9; x++) {
+            position* pos = position_at(sudoku, x, y);
+            if (pos->is_given) {
+                make_illegal(&legals, x, y, pos->value);
+            }
+        }
+    }
+
+    make_optimized_list(sudoku, &legals, order_list, &order_list_size);
+
+    // printf("[");
+    // for (size_t i = 0; i < order_list_size; i++) {
+    //     printf("(x: %d, y: %d, count: %d), ", order_list[i].x, order_list[i].y, order_list[i].count);
+    // }
+
+    // printf("]\n");
 
     uint32_t current_index = 0;
     uint32_t counter = 0;
@@ -206,38 +257,42 @@ void solver_ordered_backtrack(sudoku* sudoku) {
         uint8_t x = order_list[current_index].x;
         uint8_t y = order_list[current_index].y;
 
-        uint8_t start_it;
+        uint8_t guess;
         if (is_empty(sudoku, x, y)) {
-            start_it = 1;
+            guess = 1;
         } else {
-            start_it = piece_at(sudoku, x, y)->value + 1;
+            uint8_t last_guess = position_at(sudoku, x, y)->value;
+
+            assert(!is_legal(&legals, x, y, last_guess));
+            make_legal(&legals, x, y, last_guess);
+
+            guess = last_guess + 1;
         }
         
         uint8_t failed = 1;
         
-        for (uint8_t i = start_it; i < 10; i++) {
-            if (is_legal(sudoku, x, y, i)) {
+        for (; guess < 10; guess++) {
+            position* position = position_at(sudoku, x, y);
+            
+            if (is_legal(&legals, x, y, guess)) {
                 failed = 0;
-                piece_at(sudoku, x, y)->value = i;
+                position_at(sudoku, x, y)->value = guess;
 
                 break;
             }
         }
         
         if (failed) {
-            piece_at(sudoku, x, y)->value = EMPTY_POSITION;
+            position_at(sudoku, x, y)->value = EMPTY_POSITION;
+
             current_index -= 1;
             x = order_list[current_index].x;
             y = order_list[current_index].y;
-
-            while (piece_at(sudoku, x, y)->is_given) {
-                current_index -= 1;
-                x = order_list[current_index].x;
-                y = order_list[current_index].y;
-            }
         } else {
-            counter += 1;
+            (*iterations)++;
             current_index += 1;
+            make_illegal(&legals, x, y, guess);
+
             if (current_index < order_list_size) {
                 x = order_list[current_index].x;
                 y = order_list[current_index].y;
@@ -248,6 +303,9 @@ void solver_ordered_backtrack(sudoku* sudoku) {
             break;
         }
     }
+
+    print_sudoku(sudoku, NULL);
+    printf("\n\n\n");
 }
 
 int main() {
@@ -303,8 +361,9 @@ int main() {
 
     print_sudoku(sudoku, NULL);
 
-    solver_ordered_backtrack(sudoku);
-    
+    uint32_t iterations = 0;
+    solver_ordered_backtrack(sudoku, &iterations);
+
     print_sudoku(sudoku, NULL);
 }
 

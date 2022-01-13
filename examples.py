@@ -3,7 +3,13 @@ from solver import Solver
 from solve_algorithms.backtrack import Backtrack
 from solve_algorithms.ordered_backtrack import OrderedBacktrack
 from solve_algorithms.ordered_backtrack_native import OrderedBacktrackNative
+import sys
 
+algorithms = {
+    "default": Backtrack(),
+    "ordered": OrderedBacktrack(),
+    "native": OrderedBacktrackNative()
+}
 
 example = Sudoku.from_text("""
 0 2 0 3 5 0 0 8 4
@@ -29,5 +35,7 @@ erect_puzzle = Sudoku.from_text("""
 0 0 0 0 4 0 0 0 9
 """)
 
+algorithm = algorithms[sys.argv[1] if len(sys.argv) > 1 else "default"]
+
 solver = Solver(erect_puzzle)
-solver.solve(OrderedBacktrackNative())
+solver.solve(algorithm)

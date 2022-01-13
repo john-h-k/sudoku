@@ -19,4 +19,4 @@ TARGET = solver
 all: $(TARGET)
  
 $(TARGET): $(TARGET).c
-	$(CC) $(CFLAGS) -Ofast -mcpu=apple-m1 -o $(TARGET) $(TARGET).c $(LFLAGS)
+	$(CC) $(CFLAGS) -O3 -mcpu=apple-m1 -o $(TARGET) $(TARGET).c $(LFLAGS)

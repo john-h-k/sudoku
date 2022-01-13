@@ -1,14 +1,30 @@
-from ctypes import cdll
+from ctypes import cdll, POINTER, c_uint32, c_void_p
 from time import time
 
 class OrderedBacktrackNative:
     def __init__(self):
         self.__native_library = cdll.LoadLibrary("solver")
+        
+        self.__native_library.solver_ordered_backtrack.argtypes = [c_void_p, POINTER(c_uint32)]
 
     def solve(self, sudoku, iterate):
-        native_data = self.__positions_as_bytes(sudoku)
-        self.__native_library.solver_ordered_backtrack(native_data)
-        self.__bytes_to_positions(sudoku, native_data)
+        loop = 100
+
+        times = []
+        native_data = bytearray(self.__positions_as_bytes(sudoku))
+
+        for _ in range(100):
+            copy = bytes(native_data)
+            iterations = c_uint32(0)
+            before = time()
+            self.__native_library.solver_ordered_backtrack(copy, iterations)
+            after = time()
+            times.append(after - before)
+
+
+        self.__bytes_to_positions(sudoku, copy)
+
+        print(f"Average time: {sum(times) / loop}")
         
 
     # typedef struct {

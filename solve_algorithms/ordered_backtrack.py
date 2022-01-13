@@ -1,8 +1,10 @@
+from functools import total_ordering
+
 class OrderedBacktrack:
     def solve(self, sudoku, iterate):
         list = self.getOptimizedList(sudoku)
 
-        self.orderedBacktrack(list, sudoku)
+        self.orderedBacktrack(list, sudoku, iterate)
 
     def getBasicList(self, sudoku):
         order_list = []
@@ -14,6 +16,47 @@ class OrderedBacktrack:
         return order_list
     
     def getOptimizedList(self, sudoku):
+        @total_ordering
+        class PositionInfo:
+            def __init__(self, x, y, count):
+                self.x = x
+                self.y = y
+                self.count = count
+
+            def __lt__(self, other):
+                return self.__compare_to(other) == -1
+
+            def __gt__(self, other):
+                return self.__compare_to(other) == 1
+
+            def __eq__(self, other):
+                return self.__compare_to(other) == 0
+
+            def __compare_to(self, other):           
+                if self.count > other.count:
+                    return 1
+
+                if self.count < other.count:
+                    return -1     
+
+                if self.y > other.y:
+                    return 1
+
+                if self.y < other.y:
+                    return -1   
+
+                if self.x > other.x:
+                    return 1
+
+                if self.x < other.x:
+                    return -1
+
+                return 0
+
+            def __str__(self):
+                return f"(x: {self.x}, y: {self.y}, count: {self.count})"
+
+
         optimized_list = []
         for y in range(9):
             for x in range(9):
@@ -22,21 +65,20 @@ class OrderedBacktrack:
                     continue
                 for i in range(1, 10):
                     if sudoku.is_legal(x, y, i):
-                        if x == 2 and y == 0:
-                            print(i)
                         count += 1
-                optimized_list.append([count, (x, y)])
-        print(optimized_list)
-        optimized_list.sort(key=lambda x: x[0])
-        output_list = []
-        for i in optimized_list:
-            output_list.append(i[1])
-        return output_list
+                
+                optimized_list.append(PositionInfo(x, y, count))
 
-    def orderedBacktrack(self, order_list, sudoku):
+
+        optimized_list.sort()
+
+        print([str(o) for o in optimized_list])
+        
+        return [(o.x, o.y) for o in optimized_list]
+
+    def orderedBacktrack(self, order_list, sudoku, iterate):
+        iterations = 0
         current_index = 0
-        counter = 0
-
 
         while True:
             x, y = order_list[current_index]
@@ -67,11 +109,13 @@ class OrderedBacktrack:
                         current_index -= 1
                         x, y = order_list[current_index]
                 else:
-                    counter += 1
                     current_index += 1
+                    iterate()
+                    iterations += 1
                     if current_index < len(order_list):
                         x, y = order_list[current_index]
                     
             if current_index == len(order_list):
-                print(counter)
                 break
+
+        print(f"Iterations: {iterations}")
