@@ -1,5 +1,6 @@
 from functools import total_ordering
 
+
 class OrderedBacktrack:
     def solve(self, sudoku, iterate):
         list = self.getOptimizedList(sudoku)
@@ -14,7 +15,7 @@ class OrderedBacktrack:
                     continue
                 order_list.append((x, y))
         return order_list
-    
+
     def getOptimizedList(self, sudoku):
         @total_ordering
         class PositionInfo:
@@ -32,18 +33,18 @@ class OrderedBacktrack:
             def __eq__(self, other):
                 return self.__compare_to(other) == 0
 
-            def __compare_to(self, other):           
+            def __compare_to(self, other):
                 if self.count > other.count:
                     return 1
 
                 if self.count < other.count:
-                    return -1     
+                    return -1
 
                 if self.y > other.y:
                     return 1
 
                 if self.y < other.y:
-                    return -1   
+                    return -1
 
                 if self.x > other.x:
                     return 1
@@ -56,7 +57,6 @@ class OrderedBacktrack:
             def __str__(self):
                 return f"(x: {self.x}, y: {self.y}, count: {self.count})"
 
-
         optimized_list = []
         for y in range(9):
             for x in range(9):
@@ -66,14 +66,11 @@ class OrderedBacktrack:
                 for i in range(1, 10):
                     if sudoku.is_legal(x, y, i):
                         count += 1
-                
-                optimized_list.append(PositionInfo(x, y, count))
 
+                optimized_list.append(PositionInfo(x, y, count))
 
         optimized_list.sort()
 
-        print([str(o) for o in optimized_list])
-        
         return [(o.x, o.y) for o in optimized_list]
 
     def orderedBacktrack(self, order_list, sudoku, iterate):
@@ -91,16 +88,16 @@ class OrderedBacktrack:
                     start_it = 1
                 else:
                     start_it = sudoku[x, y] + 1
-                
+
                 failed = True
-                
+
                 for i in range(start_it, 10):
                     if sudoku.is_legal(x, y, i):
                         failed = False
                         sudoku[x, y] = i
 
                         break
-                
+
                 if failed:
                     sudoku[x, y] = None
                     current_index -= 1
@@ -114,8 +111,6 @@ class OrderedBacktrack:
                     iterations += 1
                     if current_index < len(order_list):
                         x, y = order_list[current_index]
-                    
+
             if current_index == len(order_list):
                 break
-
-        print(f"Iterations: {iterations}")

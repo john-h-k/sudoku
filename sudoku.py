@@ -31,7 +31,7 @@ class Sudoku:
             self[k] = v
             self.__givens[k] = v
 
-        assert(self.__givens == givens)
+        assert self.__givens == givens
 
     def is_legal(self, x, y, n):
         return not any((n in self.row(y), n in self.column(x), n in self.containing_grid(x, y)))
@@ -186,28 +186,29 @@ class Sudoku:
         return result
 
 
-example = Sudoku.from_text("""
-0 2 0 3 5 0 0 8 4
-0 0 0 4 6 0 0 5 7
-0 0 0 2 0 7 0 1 0
-0 0 5 0 4 0 8 0 2
-0 6 9 0 2 8 0 0 0
-0 0 8 0 0 0 1 0 6
-7 3 0 8 0 5 4 2 0
-9 0 0 7 3 0 0 6 1
-0 5 0 0 9 2 0 0 8
-""")
+if __name__ == "__main__":
+    example = Sudoku.from_text("""
+    0 2 0 3 5 0 0 8 4
+    0 0 0 4 6 0 0 5 7
+    0 0 0 2 0 7 0 1 0
+    0 0 5 0 4 0 8 0 2
+    0 6 9 0 2 8 0 0 0
+    0 0 8 0 0 0 1 0 6
+    7 3 0 8 0 5 4 2 0
+    9 0 0 7 3 0 0 6 1
+    0 5 0 0 9 2 0 0 8
+    """)
 
-correct = Sudoku.from_text("""
-6 2 7 3 5 1 9 8 4
-8 1 3 4 6 9 2 5 7
-5 9 4 2 8 7 6 1 3
-1 7 5 9 4 6 8 3 2
-3 6 9 1 2 8 7 4 5
-2 4 8 5 7 3 1 9 6
-7 3 6 8 1 5 4 2 9
-9 8 2 7 3 4 5 6 1
-4 5 1 6 9 2 3 7 8
-""")
+    correct = Sudoku.from_text("""
+    6 2 7 3 5 1 9 8 4
+    8 1 3 4 6 9 2 5 7
+    5 9 4 2 8 7 6 1 3
+    1 7 5 9 4 6 8 3 2
+    3 6 9 1 2 8 7 4 5
+    2 4 8 5 7 3 1 9 6
+    7 3 6 8 1 5 4 2 9
+    9 8 2 7 3 4 5 6 1
+    4 5 1 6 9 2 3 7 8
+    """)
 
-print(correct.to_text())
+    print(correct.to_text())

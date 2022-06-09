@@ -4,4 +4,6 @@
 *.dsYM
 *.profraw
 
+.DS_Store
+
 .vscode

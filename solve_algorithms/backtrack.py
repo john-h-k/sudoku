@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+
 class Backtrack:
     def solve(self, sudoku, iterate):
         def stepBack(x, y):
@@ -10,7 +11,7 @@ class Backtrack:
             if x > 0:
                 return (x - 1, y)
             else:
-                assert(y > 0)
+                assert y > 0
                 return (8, y - 1)
 
         def stepForward(x, y, value):
@@ -20,7 +21,7 @@ class Backtrack:
             if x < 8:
                 return (x + 1, y)
             else:
-                assert(y < 8)
+                assert y < 8
                 return (0, y + 1)
 
         x = 0
@@ -54,9 +55,9 @@ class Backtrack:
                         else:
                             visited[x, y].add(value)
 
-                    else: # no legal moves
+                    else:  # no legal moves
                         sudoku[x, y] = None
-                        
+
                         x, y = stepBack(x, y)
                         while sudoku.is_given(x, y) or len(visited[x, y]) == 9:
                             x, y = stepBack(x, y)

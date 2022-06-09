@@ -225,7 +225,7 @@ void make_optimized_list(sudoku* sudoku, legal_values_info* legals, position_inf
     qsort(list, *list_size, sizeof(*list), compare_position_info);
 }
 
-void solver_ordered_backtrack(sudoku* sudoku, uint32_t* iterations) {
+void solve_backtrack(sudoku* sudoku, uint32_t* iterations, uint32_t ordered) {
     position_info order_list[9 * 9];
     uint8_t order_list_size = 0;
 
@@ -241,7 +241,11 @@ void solver_ordered_backtrack(sudoku* sudoku, uint32_t* iterations) {
         }
     }
 
-    make_optimized_list(sudoku, &legals, order_list, &order_list_size);
+    if (ordered) {
+        make_optimized_list(sudoku, &legals, order_list, &order_list_size);
+    } else {
+        make_list(sudoku, &legals, order_list, &order_list_size);
+    }
 
     // printf("[");
     // for (size_t i = 0; i < order_list_size; i++) {
@@ -304,8 +308,8 @@ void solver_ordered_backtrack(sudoku* sudoku, uint32_t* iterations) {
         }
     }
 
-    print_sudoku(sudoku, NULL);
-    printf("\n\n\n");
+    // print_sudoku(sudoku, NULL);
+    // printf("\n\n\n");
 }
 
 int main() {
@@ -362,7 +366,7 @@ int main() {
     print_sudoku(sudoku, NULL);
 
     uint32_t iterations = 0;
-    solver_ordered_backtrack(sudoku, &iterations);
+    solve_backtrack(sudoku, &iterations, 0);
 
     print_sudoku(sudoku, NULL);
 }
